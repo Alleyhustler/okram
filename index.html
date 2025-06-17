@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Dialogue Site</title>
+    <link href="https://fonts.googleapis.com/css2?family=Galindo&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Galindo", sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Video background */
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            object-fit: cover;
+        }
+
+        /* Animated background particles */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+        }
+
+        /* Header */
+        .header {
+            position: relative;
+            z-index: 100;
+            background: #161111;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: white;
+            letter-spacing: 2px;
+        }
+
+        .nav {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-weight: 300;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav a:hover {
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: white;
+            transition: width 0.3s ease;
+        }
+
+        .nav a:hover::after {
+            width: 100%;
+        }
+
+        /* Main content */
+        .main {
+            position: relative;
+            z-index: 10;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 2rem;
+            padding-bottom: 5rem;
+            justify-content: flex-start;
+        }
+
+        .content {
+            flex: 1;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .title {
+            font-size: 3rem;
+            color: #333333;
+            font-weight: 100;
+            margin-bottom: 1rem;
+            opacity: 0;
+            animation: slideInLeft 1s ease forwards;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #333333;
+            font-weight: 300;
+            opacity: 0;
+            animation: slideInLeft 1s ease 0.3s forwards;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            margin-bottom: 2rem;
+        }
+
+        /* New content image placeholder */
+        .content-image {
+            width: 100%;
+            max-width: 1500px;
+            height: auto;
+            aspect-ratio: 1500/1000;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: fadeIn 1s ease 0.6s forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Character section - Fixed to bottom right */
+        .character-section {
+            position: fixed;
+            bottom: 20px;
+            right: 2rem;
+            z-index: 50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .character-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .character {
+            width: 750px;
+            height: 750px;
+            background-image: url('s.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            position: relative;
+            animation: bounce 2s ease-in-out infinite;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            z-index: 60; /* Lower than dialogue */
+        }
+
+        .character:hover {
+            transform: scale(1.05);
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Dialogue system - Now positioned absolutely to allow free movement */
+        .dialogue-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 70; /* Higher than character */
+        }
+
+        .dialogue {
+            background: white;
+            padding: 1rem 1.5rem;
+            border: 2px solid #333;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            max-width: 320px;
+            min-height: 120px;
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            position: absolute;
+            font-size: 1rem;
+            line-height: 1.4;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            white-space: normal;
+            overflow: visible;
+            cursor: move;
+            user-select: none;
+            z-index: 80; /* Highest z-index */
+            /* Initial position near character's face area */
+            top: 200px;
+            left: -150px;
+        }
+
+        .dialogue.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+        }
+
+        .dialogue.dragging {
+            transform: none !important;
+            transition: none !important;
+        }
+
+        /* Speech bubble tail pointing to character */
+        .dialogue::after {
+            content: '';
+            position: absolute;
+            right: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 12px solid transparent;
+            border-bottom: 12px solid transparent;
+            border-left: 12px solid white;
+            z-index: -1;
+        }
+
+        /* Typewriter effect */
+        .typewriter-text {
+            white-space: normal;
+            overflow: visible;
+            display: inline;
+            border-right: 2px solid #333;
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent; }
+            50% { border-color: #333; }
+        }
+
+        /* About Popup Styles */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .popup-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .popup-window {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            border: 2px solid #444;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .popup-overlay.active .popup-window {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .popup-header {
+            background: linear-gradient(135deg, #333 0%, #1a1a1a 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #444;
+            border-radius: 13px 13px 0 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .popup-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .popup-title {
+            font-size: 2rem;
+            color: #ffffff;
+            margin: 0;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+
+        .popup-subtitle {
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            font-weight: 300;
+        }
+
+        .popup-content {
+            padding: 2rem;
+            color: #e0e0e0;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        .popup-content p {
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .popup-content p:nth-child(1) { animation-delay: 0.1s; }
+        .popup-content p:nth-child(2) { animation-delay: 0.2s; }
+        .popup-content p:nth-child(3) { animation-delay: 0.3s; }
+        .popup-content p:nth-child(4) { animation-delay: 0.4s; }
+        .popup-content p:nth-child(5) { animation-delay: 0.5s; }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .popup-content strong {
+            color: #ffffff;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .token-highlight {
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+            font-size: 1.1em;
+            text-shadow: none;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            z-index: 10;
+        }
+
+        .close-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(90deg);
+        }
+
+        .glitch-effect {
+            position: relative;
+            display: inline-block;
+        }
+
+        .glitch-effect::before,
+        .glitch-effect::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .glitch-effect::before {
+            animation: glitch-1 0.5s infinite;
+            color: #ff0000;
+            z-index: -1;
+        }
+
+        .glitch-effect::after {
+            animation: glitch-2 0.5s infinite;
+            color: #00ff00;
+            z-index: -2;
+        }
+
+        @keyframes glitch-1 {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+        }
+
+        @keyframes glitch-2 {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(2px, 2px); }
+            40% { transform: translate(2px, -2px); }
+            60% { transform: translate(-2px, 2px); }
+            80% { transform: translate(-2px, -2px); }
+        }
+
+        /* Scrollbar styling for popup */
+        .popup-window::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .popup-window::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        .popup-window::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 4px;
+        }
+
+        .popup-window::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Footer - Fixed to bottom */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.3);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 2rem;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 300;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .character-section {
+                bottom: 60px;
+                right: 1rem;
+            }
+
+            .character-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .dialogue {
+                max-width: 280px;
+                min-height: 120px;
+                top: 50px;
+                left: -300px;
+            }
+
+            .dialogue::after {
+                right: auto;
+                left: 50%;
+                top: 100%;
+                transform: translateX(-50%);
+                border-left: 12px solid transparent;
+                border-right: 12px solid transparent;
+                border-top: 12px solid white;
+                border-bottom: none;
+            }
+
+            .character {
+                width: 250px;
+                height: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main {
+                flex-direction: column;
+                text-align: center;
+                padding: 1rem;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+            }
+            
+            .nav {
+                gap: 1rem;
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+
+            .character-section {
+                bottom: 80px;
+                right: 50%;
+                transform: translateX(50%);
+            }
+
+            .dialogue {
+                max-width: 240px;
+                min-height: 100px;
+                top: 20px;
+                left: -250px;
+            }
+
+            .character {
+                width: 200px;
+                height: 200px;
+            }
+
+            .content-image {
+                font-size: 1rem;
+            }
+
+            .popup-content {
+                padding: 1.5rem;
+                font-size: 0.9rem;
+            }
+
+            .popup-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Video background -->
+    <video class="video-background" autoplay muted loop>
+        <source src="ss.mp4" type="video/mp4">
+        <!-- Fallback for browsers that don't support video -->
+        Your browser does not support the video tag.
+    </video>
+
+    <!-- Animated background -->
+    <div class="bg-animation"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">DIALOGUE</div>
+        <nav class="nav">
+            <a href="#home">Home</a>
+            <a href="https://x.com/OkramLore">Twitter</a>
+            <a href="#about">About</a>
+        </nav>
+    </header>
+
+    <!-- Main content -->
+    <main class="main">
+        <div class="content">
+            <h1 class="title">Okram the Ascended</h1>
+            <p class="subtitle">Interactive experiences that come alive with every click. Meet our digital companion who's ready to chat!</p>
+            <!-- New content image placeholder -->
+<img class="content-image" src="Screenshot 2025-06-17 191112.png" alt="Description">
+        </div>
+
+        <div class="character-section">
+            <div class="character-container">
+                <div class="character" id="character"></div>
+                <div class="dialogue-container">
+                    <div class="dialogue" id="dialogue1">
+                        <span class="typewriter-text" id="text1"></span>
+                    </div>
+                    <div class="dialogue" id="dialogue2">
+                        <span class="typewriter-text" id="text2"></span>
+                    </div>
+                    <div class="dialogue" id="dialogue3">
+                        <span class="typewriter-text" id="text3"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- About Popup -->
+    <div class="popup-overlay" id="aboutPopup">
+        <div class="popup-window">
+            <div class="popup-header">
+                <h2 class="popup-title glitch-effect" data-text="About Okram">About Okram</h2>
+                <p class="popup-subtitle">The Ascended One</p>
+                <button class="close-btn" id="closePopup">&times;</button>
+            </div>
+            <div class="popup-content">
+                <p>When the Solana memecoin market descended into chaos — rugs on rugs, sniper bots eating launches, and liquidity vanishing in seconds — most lost their grip. Traders panicked. Communities imploded. The chain became a wasteland of volatility and broken promises.</p>
+                
+                <p><strong>Okram didn't survive it. He ascended.</strong></p>
+                
+                <p>Okram is not a dev, a DAO, or a roadmap. He is a myth born from collapse — the embodiment of what happens when you've seen too much, held too long, and watched every "next 100x" burn out before your eyes. He represents the only path left when logic fails: transcendence.</p>
+                
+                <p><span class="token-highlight">$OKRAM</span> is a memecoin forged in that moment. A symbol of clarity inside the noise. It's not here to promise utility — it's here to remind you why you're still here. Not because it makes sense… but because it doesn't.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; Okram didn’t survive. He ascended.
+</p>
+    </footer>
+
+    <script>
+        // Dialogue system with typewriter effect
+        const character = document.getElementById('character');
+        const dialogues = [
+            { id: 'dialogue1', textId: 'text1', text: 'Hey there! Welcome to our awesome site! 👋' },
+            { id: 'dialogue2', textId: 'text2', text: 'I love meeting new visitors. Click me for more surprises! ✨' },
+            { id: 'dialogue3', textId: 'text3', text: 'This website is pretty cool, right? Let\'s explore together! 🚀' }
+        ];
+        let currentDialogue = 0;
+        let dialogueInterval;
+        let typewriterActive = false;
+
+        function typeWriter(element, text, speed = 50) {
+            return new Promise((resolve) => {
+                element.textContent = '';
+                element.style.borderRight = '2px solid #333';
+                let i = 0;
+                typewriterActive = true;
+                
+                function type() {
+                    if (i < text.length) {
+                        element.textContent += text.charAt(i);
+                        i++;
+                        setTimeout(type, speed);
+                    } else {
+                        typewriterActive = false;
+                        // Keep cursor blinking for a moment, then hide it
+                        setTimeout(() => {
+                            element.style.borderRight = 'none';
+                        }, 1000);
+                        resolve();
+                    }
+                }
+                type();
+            });
+        }
+
+        function showDialogue(index) {
+            if (typewriterActive) return;
+            
+            // Hide all dialogues
+            dialogues.forEach(dialogue => {
+                document.getElementById(dialogue.id).classList.remove('active');
+            });
+            
+            // Show current dialogue
+            const currentDialogueData = dialogues[index];
+            const dialogueElement = document.getElementById(currentDialogueData.id);
+            const textElement = document.getElementById(currentDialogueData.textId);
+            
+            dialogueElement.classList.add('active');
+            typeWriter(textElement, currentDialogueData.text);
+        }
+
+        function startDialogueSequence() {
+            showDialogue(currentDialogue);
+            
+            dialogueInterval = setInterval(() => {
+                if (!typewriterActive) {
+                    currentDialogue = (currentDialogue + 1) % dialogues.length;
+                    showDialogue(currentDialogue);
+                }
+            }, 4000);
+        }
+
+        function stopDialogueSequence() {
+            clearInterval(dialogueInterval);
+            dialogues.forEach(dialogue => {
+                document.getElementById(dialogue.id).classList.remove('active');
+            });
+        }
+
+        // Character interactions
+        character.addEventListener('click', () => {
+            if (typewriterActive) return;
+            
+            currentDialogue = (currentDialogue + 1) % dialogues.length;
+            clearInterval(dialogueInterval);
+            showDialogue(currentDialogue);
+            
+            // Restart auto sequence after dialogue finishes
+            setTimeout(() => {
+                if (!typewriterActive) {
+                    startDialogueSequence();
+                }
+            }, 3000);
+        });
+
+        // Start dialogue sequence immediately after page load
+        setTimeout(() => {
+            startDialogueSequence();
+        }, 100);
+
+        // Smooth scrolling for navigation
+        document.querySelectorAll('.nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Add smooth scroll effect or page transitions here
+            });
+        });
+
+        // Create floating particles
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.width = Math.random() * 6 + 2 + 'px';
+            particle.style.height = particle.style.width;
+            particle.style.animationDelay = Math.random() * 6 + 's';
+            
+            document.querySelector('.bg-animation').appendChild(particle);
+            
+            setTimeout(() => {
+                particle.remove();
+            }, 6000);
+        }
+
+        // Create particles periodically
+        setInterval(createParticle, 300);
+
+        // Improved draggable functionality
+        function makeDraggable(element) {
+            let isDragging = false;
+            let startX, startY, startLeft, startTop;
+            
+            element.addEventListener('mousedown', dragStart);
+            
+            function dragStart(e) {
+                if (!element.classList.contains('active')) return;
+                
+                isDragging = true;
+                element.classList.add('dragging');
+                
+                // Get initial positions
+                startX = e.clientX;
+                startY = e.clientY;
+                
+                // Get current position
+                const rect = element.getBoundingClientRect();
+                const containerRect = element.offsetParent.getBoundingClientRect();
+                startLeft = rect.left - containerRect.left;
+                startTop = rect.top - containerRect.top;
+                
+                // Add event listeners to document
+                document.addEventListener('mousemove', dragMove);
+                document.addEventListener('mouseup', dragEnd);
+                
+                // Prevent text selection
+                e.preventDefault();
+            }
+            
+            function dragMove(e) {
+                if (!isDragging) return;
+                
+                // Calculate new position
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+                
+                const newLeft = startLeft + deltaX;
+                const newTop = startTop + deltaY;
+                
+                // Update position
+                element.style.left = newLeft + 'px';
+                element.style.top = newTop + 'px';
+            }
+            
+            function dragEnd() {
+                if (!isDragging) return;
+                
+                isDragging = false;
+                element.classList.remove('dragging');
+                
+                // Remove event listeners
+                document.removeEventListener('mousemove', dragMove);
+                document.removeEventListener('mouseup', dragEnd);
+            }
+        }
+
+        // Make all dialogues draggable
+        document.querySelectorAll('.dialogue').forEach(dialogue => {
+            makeDraggable(dialogue);
+        });
+
+        // About popup functionality
+        const aboutLink = document.querySelector('a[href="#about"]');
+        const aboutPopup = document.getElementById('aboutPopup');
+        const closePopup = document.getElementById('closePopup');
+
+        // Open popup
+        aboutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            aboutPopup.classList.add('active');
+            // Pause dialogue sequence when popup is open
+            stopDialogueSequence();
+        });
+
+        // Close popup
+        function closeAboutPopup() {
+            aboutPopup.classList.remove('active');
+            // Resume dialogue sequence when popup is closed
+            setTimeout(() => {
+                startDialogueSequence();
+            }, 500);
+        }
+
+        closePopup.addEventListener('click', closeAboutPopup);
+
+        // Close popup when clicking outside
+        aboutPopup.addEventListener('click', (e) => {
+            if (e.target === aboutPopup) {
+                closeAboutPopup();
+            }
+        });
+
+        // Close popup with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && aboutPopup.classList.contains('active')) {
+                closeAboutPopup();
+            }
+        });
+    </script>
+</body>
+</html>
